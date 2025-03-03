@@ -50,11 +50,49 @@ class _EditScreenState extends State<EditScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.deepPurpleAccent,
-        title: const Text('แก้ไขธุรกรรม', style: TextStyle(color: Colors.white)),
-        iconTheme: const IconThemeData(color: Colors.white),
+  backgroundColor: Colors.transparent, // ทำให้แอปบาร์เป็นพื้นหลังโปร่งใส
+  elevation: 0, // ลบเงาของแอปบาร์
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.deepPurple, Colors.blueAccent], // ไล่ระดับสี
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
-      body: SingleChildScrollView(
+      boxShadow: [
+        BoxShadow(
+          color: Colors.black26, // เงาอ่อนๆ
+          blurRadius: 8,
+          offset: Offset(0, 4),
+        ),
+      ],
+    ),
+  ),
+  title: const Text(
+    'แก้ไขธุรกรรม',
+    style: TextStyle(
+      color: Colors.white,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
+      letterSpacing: 1.2, // เว้นระยะตัวอักษร
+    ),
+  ),
+  centerTitle: true, // จัดให้ชื่ออยู่ตรงกลาง
+  iconTheme: const IconThemeData(color: Colors.white), // ไอคอนเป็นสีขาว
+),
+      body: Scaffold(
+  body: Container(
+    width: double.infinity,
+    height: double.infinity, // ให้ background เต็มจอ
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.black87, Colors.deepPurple], // ไล่สีพื้นหลัง
+        begin: Alignment.topCenter,
+        end: Alignment.bottomCenter,
+      ),
+    ),
+    child: SafeArea( // ป้องกัน UI ชนขอบจอ
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
           key: formKey,
@@ -75,7 +113,7 @@ class _EditScreenState extends State<EditScreen> {
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: const LinearGradient(
-                    colors: [Colors.deepPurple, Colors.blueAccent],
+                    colors: [Color.fromARGB(255, 245, 8, 8), Color.fromARGB(255, 192, 109, 0)],
                   ),
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -106,18 +144,23 @@ class _EditScreenState extends State<EditScreen> {
                       Navigator.pop(context);
                     }
                   },
-                  child: const Text('บันทึกการแก้ไข', style: TextStyle(fontSize: 16, color: Colors.white)),
+                  child: const Text('บันทึกการแก้ไข',
+                      style: TextStyle(fontSize: 16, color: Colors.white)),
                 ),
               ),
             ],
           ),
         ),
       ),
+    ),
+  ),
+),
     );
   }
 
   /// สร้าง Card สำหรับใส่ข้อมูลทั่วไป
-  Widget buildInputCard(String label, TextEditingController controller, {bool isNumeric = false}) {
+  Widget buildInputCard(String label, TextEditingController controller,
+      {bool isNumeric = false}) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 3,
@@ -154,7 +197,8 @@ class _EditScreenState extends State<EditScreen> {
                   labelText: label,
                   border: InputBorder.none,
                 ),
-                validator: (value) => value!.isEmpty ? "กรุณาป้อน $label" : null,
+                validator: (value) =>
+                    value!.isEmpty ? "กรุณาป้อน $label" : null,
               ),
             ),
             IconButton(

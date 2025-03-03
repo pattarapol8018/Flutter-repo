@@ -23,6 +23,7 @@ class MyApp extends StatelessWidget {
       ],
       child: MaterialApp(
         title: 'Blockchain',
+        debugShowCheckedModeBanner: false,
         theme: ThemeData(
           colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
           useMaterial3: true,
@@ -46,13 +47,13 @@ class _MyHomePageState extends State<MyHomePage> {
   @override
   void initState() {
     super.initState();
-    // เรียกใช้ initData เพื่อโหลดข้อมูลครั้งแรก
+    // โหลดข้อมูลเมื่อหน้าแรกเปิดขึ้น
     TransactionProvider provider =
         Provider.of<TransactionProvider>(context, listen: false);
     provider.initData();
   }
 
-  // ✅ ฟังก์ชัน Copy ข้อมูลไปยัง Clipboard
+  // ฟังก์ชัน Copy ข้อมูลไปยัง Clipboard
   void copyToClipboard(String text) {
     Clipboard.setData(ClipboardData(text: text));
     ScaffoldMessenger.of(context).showSnackBar(
@@ -60,222 +61,219 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  // ✅ ฟังก์ชันปกปิดที่อยู่ (แสดงแค่ 4 ตัวหน้า + 4 ตัวท้าย)
+  // ฟังก์ชันปกปิดที่อยู่ (แสดงแค่ 4 ตัวหน้า + 4 ตัวท้าย)
   String maskAddress(String address) {
     if (address.length < 10) return address;
-    return address.substring(0, 4) +
-        "..." +
-        address.substring(address.length - 4);
+    return address.substring(0, 4) + "..." + address.substring(address.length - 4);
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Theme.of(context).colorScheme.inversePrimary,
-        title: Text(widget.title),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {
-              Navigator.push(context, MaterialPageRoute(builder: (context) {
-                return FormScreen();
-              })).then((_) {
-                TransactionProvider provider =
-                    Provider.of<TransactionProvider>(context, listen: false);
-                provider.initData();
-              });
-            },
-          ),
-        ],
+  title: Text(
+    widget.title,
+    style: const TextStyle(
+      fontSize: 22,
+      fontWeight: FontWeight.bold,
+      color: Colors.white,
+    ),
+  ),
+  centerTitle: true,
+  flexibleSpace: Container(
+    decoration: const BoxDecoration(
+      gradient: LinearGradient(
+        colors: [Colors.deepPurple, Colors.blueAccent], // ไล่สีจากม่วงไปฟ้า
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
       ),
-      body: Consumer<TransactionProvider>(
-        builder: (context, provider, child) {
-          int itemCount = provider.transactions.length;
+    ),
+  ),
+  elevation: 4, // เพิ่มเงาให้ AppBar ดูมีมิติ
+  
+  actions: [
+    IconButton(
+      icon: const Icon(Icons.search, color: Colors.white),
+      onPressed: () {
+        // ฟังก์ชันค้นหา (ยังไม่ได้เพิ่ม)
+      },
+    ),
+    IconButton(
+      icon: const Icon(Icons.settings, color: Colors.white),
+      onPressed: () {
+        // ฟังก์ชันตั้งค่า (ยังไม่ได้เพิ่ม)
+      },
+    ),
+  ],
+  
+),
+      body: Container(
+  decoration: const BoxDecoration(
+    gradient: LinearGradient(
+      colors: [Colors.black87, Colors.deepPurple],
+      begin: Alignment.topCenter,
+      end: Alignment.bottomCenter,
+    ),
+  ),
+  child: Consumer<TransactionProvider>(
+    builder: (context, provider, child) {
+      int itemCount = provider.transactions.length;
 
-          if (itemCount == 0) {
-            return Center(
-              child: Text(
-                'ไม่มีรายการ',
-                style: TextStyle(fontSize: 50),
+      if (itemCount == 0) {
+        return const Center(
+          child: Text(
+            'ไม่มีรายการ',
+            style: TextStyle(fontSize: 20, color: Colors.white),
+          ),
+        );
+      } else {
+        return ListView.builder(
+          itemCount: itemCount,
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+          itemBuilder: (context, int index) {
+            TransactionItem data = provider.transactions[index];
+
+            return Card(
+              margin: const EdgeInsets.symmetric(vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              elevation: 8,
+              color: Colors.white.withOpacity(0.9),
+              child: Padding(
+                padding: const EdgeInsets.all(14.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(data.title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 4),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text('จำนวน Token: ${data.amount}', style: const TextStyle(fontSize: 14)),
+                        Text('Block: ${data.blockNumber}',
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.purple)),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text('ค่าธรรมเนียม: ${data.transactionFee} ETH',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.green)),
+                    Text('เครือข่าย: ${data.network}',
+                        style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: Colors.blueAccent)),
+
+                    const Divider(height: 10, color: Colors.grey),
+
+                    // Transaction Hash + Copy
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('Tx Hash: ${maskAddress(data.transactionHash)}',
+                              style: const TextStyle(fontSize: 14, color: Colors.blueGrey)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 18, color: Colors.blue),
+                          onPressed: () => copyToClipboard(data.transactionHash),
+                        ),
+                      ],
+                    ),
+
+                    // Sender + Copy
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('ผู้ส่ง: ${maskAddress(data.sender)}', style: const TextStyle(fontSize: 14)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 18, color: Colors.blue),
+                          onPressed: () => copyToClipboard(data.sender),
+                        ),
+                      ],
+                    ),
+
+                    // Receiver + Copy
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text('ผู้รับ: ${maskAddress(data.receiver)}', style: const TextStyle(fontSize: 14)),
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.copy, size: 18, color: Colors.blue),
+                          onPressed: () => copyToClipboard(data.receiver),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 6),
+
+                    // วันที่
+                    Text('วันที่: ${data.date?.toIso8601String()}',
+                        style: const TextStyle(fontSize: 12, color: Colors.grey)),
+
+                    const SizedBox(height: 6),
+
+                    // ปุ่ม Edit และ Delete
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.end,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Icons.edit, color: Colors.orange),
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) {
+                              return EditScreen(item: data);
+                            }));
+                          },
+                        ),
+                        IconButton(
+                          icon: const Icon(Icons.delete, color: Colors.red),
+                          onPressed: () {
+                            showDialog(
+                              context: context,
+                              builder: (BuildContext context) {
+                                return AlertDialog(
+                                  title: const Text('ยืนยันการลบ'),
+                                  content: const Text('คุณต้องการลบรายการใช่หรือไม่?'),
+                                  actions: [
+                                    TextButton(
+                                      child: const Text('ยกเลิก'),
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                    TextButton(
+                                      child: const Text('ลบรายการ', style: TextStyle(color: Colors.red)),
+                                      onPressed: () {
+                                        provider.deleteTransaction(data);
+                                        Navigator.of(context).pop();
+                                      },
+                                    ),
+                                  ],
+                                );
+                              },
+                            );
+                          },
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
               ),
             );
-          } else {
-            return ListView.builder(
-              itemCount: itemCount,
-              itemBuilder: (context, int index) {
-                TransactionItem data = provider.transactions[index];
+          },
+        );
+      }
+    },
+  ),
+),
 
-                return Column(
-                  children: [
-                    Card(
-                      margin: const EdgeInsets.symmetric(
-                          vertical: 8, horizontal: 12),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(15),
-                      ),
-                      elevation: 5,
-                      child: Padding(
-                        padding: const EdgeInsets.all(12.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            // ✅ หัวข้อธุรกรรม
-                            Text(
-                              data.title,
-                              style: const TextStyle(
-                                  fontSize: 16, fontWeight: FontWeight.bold),
-                            ),
-                            const SizedBox(height: 5),
-
-                            // ✅ แสดงจำนวน Token
-                            Text('จำนวน Token: ${data.amount}',
-                                style: const TextStyle(fontSize: 12)),
-
-                            // ✅ ค่าธรรมเนียมธุรกรรม
-                            Text(
-                              'ค่าธรรมเนียม: ${data.transactionFee} ETH',
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green),
-                            ),
-
-                            // ✅ หมายเลขบล็อก
-                            Text(
-                              'Block Number: ${data.blockNumber}',
-                              style: const TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.purple),
-                            ),
-                            // ✅ แสดงเครือข่าย (Network)
-                            Text(
-                              'เครือข่าย: ${data.network}',
-                              style: TextStyle(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.blueAccent),
-                            ),
-
-                            // ✅ แสดง Transaction Hash + ปุ่ม Copy
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                      'Tx Hash: ${maskAddress(data.transactionHash)}',
-                                      style: const TextStyle(
-                                          fontSize: 12,
-                                          color: Colors.blueGrey)),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.copy,
-                                      size: 16, color: Colors.blue),
-                                  onPressed: () =>
-                                      copyToClipboard(data.transactionHash),
-                                ),
-                              ],
-                            ),
-
-                            // ✅ แสดงที่อยู่ผู้ส่ง + ปุ่ม Copy
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                      'ผู้ส่ง: ${maskAddress(data.sender)}',
-                                      style: const TextStyle(fontSize: 12)),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.copy,
-                                      size: 16, color: Colors.blue),
-                                  onPressed: () => copyToClipboard(data.sender),
-                                ),
-                              ],
-                            ),
-
-                            // ✅ แสดงที่อยู่ผู้รับ + ปุ่ม Copy
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: Text(
-                                      'ผู้รับ: ${maskAddress(data.receiver)}',
-                                      style: const TextStyle(fontSize: 12)),
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.copy,
-                                      size: 16, color: Colors.blue),
-                                  onPressed: () =>
-                                      copyToClipboard(data.receiver),
-                                ),
-                              ],
-                            ),
-
-                            // ✅ วันที่
-                            Text('วันที่: ${data.date?.toIso8601String()}',
-                                style: const TextStyle(
-                                    fontSize: 10, color: Colors.grey)),
-
-                            // ✅ ปุ่ม Edit และ Delete
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.end,
-                              children: [
-                                IconButton(
-                                  icon: const Icon(Icons.edit,
-                                      color: Colors.orange),
-                                  onPressed: () {
-                                    Navigator.push(context,
-                                        MaterialPageRoute(builder: (context) {
-                                      return EditScreen(item: data);
-                                    }));
-                                  },
-                                ),
-                                IconButton(
-                                  icon: const Icon(Icons.delete,
-                                      color: Colors.red),
-                                  onPressed: () {
-                                    showDialog(
-                                      context: context,
-                                      builder: (BuildContext context) {
-                                        return AlertDialog(
-                                          title: const Text('ยืนยันการลบ'),
-                                          content: const Text(
-                                              'คุณต้องการลบรายการใช่หรือไม่?'),
-                                          actions: [
-                                            TextButton(
-                                              child: const Text('ยกเลิก'),
-                                              onPressed: () {
-                                                Navigator.of(context).pop();
-                                              },
-                                            ),
-                                            TextButton(
-                                              child: const Text('ลบรายการ',
-                                                  style: TextStyle(
-                                                      color: Colors.red)),
-                                              onPressed: () {
-                                                provider
-                                                    .deleteTransaction(data);
-                                                Navigator.of(context).pop();
-                                              },
-                                            ),
-                                          ],
-                                        );
-                                      },
-                                    );
-                                  },
-                                ),
-                              ],
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const Divider(height: 10, thickness: 1, color: Colors.grey),
-                  ],
-                );
-              },
-            );
-          }
+      // เพิ่มปุ่ม FloatingActionButton (FAB)
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.push(context, MaterialPageRoute(builder: (context) {
+            return FormScreen();
+          })).then((_) {
+            Provider.of<TransactionProvider>(context, listen: false).initData();
+          });
         },
+        backgroundColor: const Color.fromARGB(255, 0, 89, 255),
+        child: const Icon(Icons.add, color: Colors.white),
       ),
     );
   }
